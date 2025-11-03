@@ -10,33 +10,41 @@ genai.configure(api_key=settings.GEMINI_API_KEY)
 class ChatView(APIView):
     def post(self, request):
         try:
-            user_input = request.data.get("question", "").strip()
-            if not user_input:
+            # Extract the JSON-RPC request
+            req_data = request.data
+            rpc_id = req_data.get("id", str(uuid.uuid4()))
+            message_parts = req_data.get("params", {}).get("message", {}).get("parts", [])
+            user_question = None
+            if message_parts:
+                for part in message_parts:
+                    if part.get("kind") == "text":
+                        user_question = part.get("text")
+                        break
+
+            if not user_question:
                 return JsonResponse({
                     "jsonrpc": "2.0",
-                    "error": {"code": -32000, "message": "Question is required."},
-                    "id": 1
+                    "error": {"code": -32000, "message": "No question provided"},
+                    "id": rpc_id
                 }, status=400)
 
-            # Generate AI response
+            # Generate AI response using Gemini
             prompt = f"""
-            You are a helpful decision assistant. The user says: "{user_input}".
+            You are a helpful decision assistant. The user says: "{user_question}".
             Respond with pros and cons for each choice and a final recommendation.
-            Be concise and clear.
             """
 
             model = genai.GenerativeModel("gemini-2.5-flash")
             ai_response = model.generate_content(prompt).text
 
-            # Create task/context IDs
+            # Build A2A protocol response
             task_id = str(uuid.uuid4())
             context_id = str(uuid.uuid4())
             timestamp = datetime.utcnow().isoformat() + "Z"
 
-            # Build JSON-RPC A2A response
             response_data = {
                 "jsonrpc": "2.0",
-                "id": task_id,
+                "id": rpc_id,
                 "result": {
                     "id": task_id,
                     "contextId": context_id,
@@ -78,5 +86,5 @@ class ChatView(APIView):
             return JsonResponse({
                 "jsonrpc": "2.0",
                 "error": {"code": -32000, "message": str(e)},
-                "id": 1
+                "id": req_data.get("id", 1)
             }, status=500)
