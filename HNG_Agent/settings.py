@@ -28,9 +28,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
+
 
 
 # Application definition
@@ -43,10 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'DecisionChat'
+    'DecisionChat',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -57,6 +60,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'HNG_Agent.urls'
+
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 TEMPLATES = [
     {
