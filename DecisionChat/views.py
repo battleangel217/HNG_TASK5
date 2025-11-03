@@ -32,6 +32,7 @@ class ChatView(APIView):
             prompt = f"""
             You are a helpful decision assistant. The user says: "{user_question}".
             Respond with pros and cons for each choice and a final recommendation.
+            Be concise and clear
             """
 
             model = genai.GenerativeModel("gemini-2.5-flash")
